@@ -14,6 +14,7 @@ import (
 	messagerr "github.com/ranxx/ztcp/message"
 	"github.com/ranxx/ztcp/pack"
 	"github.com/ranxx/ztcp/router"
+	"github.com/ranxx/ztcp/write"
 )
 
 func Test01(t *testing.T) {
@@ -124,6 +125,77 @@ func Test04(t *testing.T) {
 				panic(err)
 			}
 			fmt.Println(c.Write(data2))
+		}
+	}()
+	for {
+		idex++
+		c, err := list.Accept()
+		if err != nil {
+			panic(err)
+		}
+		cc := conn.NewConn(idex, c, conn.WithDispatcher(dispatch.DefaultDispatcher(root)))
+		mmm.AddConn(cc)
+		cc.Start()
+	}
+}
+
+func Test05(t *testing.T) {
+	mmm := conn.NewManager()
+	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
+		s, ok := i.([]byte)
+		log.Println("Hhhhhhh", string(s), ok)
+	}))
+	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
+		s, ok := i.([]byte)
+		log.Println("msg-2", string(s), ok)
+	}))
+	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
+		s, ok := i.([]byte)
+		log.Println("msg-3", mmm.Get(1).RemoteAddr(), string(s), ok)
+	}))
+	route4 := router.NewRouter(messagerr.MsgID(4), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
+		s, ok := i.([]byte)
+		log.Println("msg-4", mmm.Get(1).RemoteAddr(), string(s), ok)
+	}))
+	root := router.NewRoot().AddRouter(route1, route2, route3, route4)
+
+	list, err := net.Listen("tcp", ":12351")
+	if err != nil {
+		panic(err)
+	}
+	idex := int64(0)
+
+	go func() {
+		c, err := net.Dial("tcp", ":12351")
+		if err != nil {
+			panic(err)
+		}
+		cc := conn.NewConn(0, c, conn.WithWriter(write.DefaultWriter(nil, write.WithTypeMsgID(func() (interface{}, messagerr.MsgID) {
+			return []byte{}, 4
+		}))))
+		writer := cc.Writer()
+		i := 100
+		for {
+			time.Sleep(time.Second)
+			i++
+			data, err := pack.NewPackage(messagerr.MsgID(1), []byte(fmt.Sprintf("我再说 %d", i))).PackBytes()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(c.Write(data))
+			data2, err := pack.NewPackage(messagerr.MsgID(2), []byte(fmt.Sprintf("我说你 %d", i))).PackBytes()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(c.Write(data2))
+			data2, err = pack.NewPackage(messagerr.MsgID(3), []byte(fmt.Sprintf("我说你是个大笨蛋 %d", i))).PackBytes()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(c.Write(data2))
+			fmt.Println(writer.WriteValue([]byte(fmt.Sprintf("我在测第4个 %d  WriteValue", i))))
+			fmt.Println(writer.Write(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
+			fmt.Println(writer.WriteMessager(messagerr.DefaultMessager(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  WriteMessager", i)))))
 		}
 	}()
 	for {

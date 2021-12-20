@@ -15,11 +15,8 @@ type Dispatcher interface {
 
 type dispatcher struct {
 	root               *router.Root
-	marshaler          encoding.Marshaler                     // 消息序列化
 	unmarshaler        encoding.Unmarshaler                   // 消息反序列化
-	specialMarshaler   map[message.MsgID]encoding.Marshaler   // 特效消息体 序列化
 	specialUnmarshaler map[message.MsgID]encoding.Unmarshaler // 特效消息体 反序列化
-	handler            map[message.MsgID]func(interface{})
 }
 
 // DefaultDispatcher default dispatch

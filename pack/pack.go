@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"reflect"
 
 	"github.com/ranxx/ztcp/message"
 )
@@ -21,13 +20,12 @@ type Packer interface {
 }
 
 type packer struct {
-	msg reflect.Type
+	gen message.GenMessage
 }
 
 // DefaultPacker packer
-func DefaultPacker(msgType message.Messager) Packer {
-	// reflect.New(reflect.TypeOf(msgType))
-	return &packer{msg: reflect.TypeOf(msgType).Elem()}
+func DefaultPacker(gen message.GenMessage) Packer {
+	return &packer{gen: gen}
 }
 
 func (p *packer) GetHeadLength() int64 {
@@ -36,7 +34,8 @@ func (p *packer) GetHeadLength() int64 {
 
 func (p *packer) UnpackHead(body []byte) (message.Messager, error) {
 	reader := bytes.NewBuffer(body)
-	msg := reflect.New(p.msg).Interface().(message.Messager)
+
+	msg := p.gen(message.MsgID(0), nil)
 
 	msgid := msg.GetMsgID()
 	length := msg.GetDataLength()

@@ -33,8 +33,8 @@ func NewRouter(msgid message.MsgID, handler Handler, opts ...options.Option) *Ro
 }
 
 // Use 添加中间件，适用于该路由
-func (r *Router) Use(mid Handler) *Router {
-	r.middlewares = append(r.middlewares, mid)
+func (r *Router) Use(mid ...Handler) *Router {
+	r.middlewares = append(r.middlewares, mid...)
 	return r
 }
 

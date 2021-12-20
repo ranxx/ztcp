@@ -14,6 +14,9 @@ type Messager interface {
 	GetData() []byte
 }
 
+// GenMessage ...
+type GenMessage func(MsgID, []byte) Messager
+
 type messager struct {
 	msgid  MsgID  // 消息号
 	length uint32 // 数据部分的 长度

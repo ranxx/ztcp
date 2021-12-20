@@ -7,10 +7,12 @@ package conn
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/ranxx/ztcp/read"
+	"github.com/ranxx/ztcp/write"
 )
 
 // Conner conn
@@ -18,30 +20,39 @@ type Conner interface {
 	net.Conn
 	ID() int64
 	Start()
+	Writer() write.Writer
+	Reader() read.Reader
 }
 
 // conn ...
 type conn struct {
-	net.Conn          // net
-	id       int64    // 唯一标识
-	opt      *Options // 可选项
+	net.Conn       // net
+	id       int64 // 唯一标识
 	rlock    sync.Mutex
+	wlock    sync.Mutex
+	opt      *Options // 可选项
 }
 
 // NewConn ...
 func NewConn(id int64, _conn net.Conn, opts ...Option) Conner {
+	conn := &conn{
+		id:    id,
+		Conn:  _conn,
+		rlock: sync.Mutex{},
+		wlock: sync.Mutex{},
+	}
+
 	opt := DefaultOptions()
 
 	for _, v := range opts {
 		v(opt)
 	}
 
-	return &conn{
-		id:    id,
-		Conn:  _conn,
-		opt:   opt,
-		rlock: sync.Mutex{},
-	}
+	opt.writer.With(conn)
+	opt.reader.With(conn)
+
+	conn.opt = opt
+	return conn
 }
 
 func (c *conn) ID() int64 {
@@ -50,8 +61,6 @@ func (c *conn) ID() int64 {
 
 func (c *conn) Start() {
 	go c.gReading()
-
-	// go c.gWriting()
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
@@ -60,9 +69,14 @@ func (c *conn) Read(b []byte) (n int, err error) {
 	return c.Conn.Read(b)
 }
 
+func (c *conn) Write(b []byte) (n int, err error) {
+	c.wlock.Lock()
+	defer c.wlock.Unlock()
+	return c.Conn.Write(b)
+}
+
 func (c *conn) gReading() {
 	// 是否开启
-	fmt.Println("开启 reading")
 	for {
 		if c.opt.closeConnRead {
 			time.Sleep(time.Second)
@@ -71,72 +85,26 @@ func (c *conn) gReading() {
 		select {
 		case <-c.opt.close:
 		default:
+
 			c.reading()
 		}
 	}
 }
 
 func (c *conn) reading() error {
-	c.rlock.Lock()
-	defer c.rlock.Unlock()
-	// 读 head
-	headData := make([]byte, c.opt.packer.GetHeadLength())
-	if _, err := io.ReadFull(c.Conn, headData); err != nil {
-		return err
-	}
-
-	// 解包 head
-	msg, err := c.opt.packer.UnpackHead(headData)
+	msg, err := c.opt.reader.Read()
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-
-	// 读取 body
-	data := make([]byte, msg.GetDataLength())
-	if _, err := io.ReadFull(c.Conn, data); err != nil {
-		return err
-	}
-
-	// 设置 data
-	msg.SetData(data)
-
 	go c.opt.dispatcher.Dispatch(msg, c)
 	return nil
 }
 
-// func (c *conn) gWriting() {
-// 	// 是否开启
-// 	for {
-// 		if c.opt.closeConnWrite {
-// 			time.Sleep(time.Second)
-// 			continue
-// 		}
-// 		select {
-// 		case <-c.opt.close:
-// 		case fn := <-c.opt.writeChan:
-// 			c.writing(fn)
-// 		default:
-// 			time.Sleep(time.Millisecond * 100)
-// 		}
-// 	}
-// }
+func (c *conn) Writer() write.Writer {
+	return c.opt.writer
+}
 
-// func (c *conn) writing(fn writeFunc) error {
-// 	msgid, value := fn()
-
-// 	data, err := c.opt.marshaler.Marshal(msgid, value)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// 打包
-// 	data, err = c.opt.packer.Pack(data)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if _, err := c.conn.Write(data); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func (c *conn) Reader() read.Reader {
+	return c.opt.reader
+}

@@ -10,14 +10,14 @@ import (
 
 // Handler ...
 type Handler interface {
-	ServeNET(context.Context, net.Conn, interface{})
+	Serve(context.Context, net.Conn, interface{})
 }
 
 // WrapHandler ...
 type WrapHandler func(context.Context, net.Conn, interface{})
 
-// ServeNET ...
-func (w WrapHandler) ServeNET(ctx context.Context, c net.Conn, v interface{}) {
+// Serve ...
+func (w WrapHandler) Serve(ctx context.Context, c net.Conn, v interface{}) {
 	w(ctx, c, v)
 }
 
@@ -45,14 +45,32 @@ func NewRoot(opt ...*options.Options) *Root {
 
 // NewGroup 新建 group
 func (r *Root) NewGroup() *Group {
-	group := Group{root: r}
+	group := Group{middlewares: make([]Handler, 0, 10), root: r}
 	r.groups[&group] = struct{}{}
 	return &group
 }
 
+// Merge 合并
+func (r *Root) Merge(r2 *Root) *Root {
+	for k, v := range r2.routers {
+		r.routers[k] = v
+	}
+	for k, v := range r2.groups {
+		r.groups[k] = v
+	}
+	r.middlewares = append(r.middlewares, r2.middlewares...)
+	return r
+}
+
 // AddGroup 添加 group
-func (r *Root) AddGroup(g *Group) *Root {
-	r.groups[g] = struct{}{}
+func (r *Root) AddGroup(groups ...*Group) *Root {
+	for _, g := range groups {
+		r.groups[g] = struct{}{}
+		if g.root == r {
+			continue
+		}
+		g.root = r.Merge(g.root)
+	}
 	return r
 }
 
@@ -66,8 +84,8 @@ func (r *Root) AddRouter(rts ...*Router) *Root {
 }
 
 // Use 添加中间件，适用于所有路由
-func (r *Root) Use(mid Handler) *Root {
-	r.middlewares = append(r.middlewares, mid)
+func (r *Root) Use(mid ...Handler) *Root {
+	r.middlewares = append(r.middlewares, mid...)
 	return r
 }
 
@@ -81,22 +99,23 @@ func (r *Root) dispatch(msgid message.MsgID, conn net.Conn, v interface{}) {
 	if router == nil {
 		return
 	}
+
+	// TODO: worker
 	go func() {
-
 		ctx := context.Background()
-
 		handlers := make([]Handler, 0, 30)
 		handlers = append(handlers, r.middlewares...)
+
 		// 如果group被删了，不应该触发 group的中间件
 		if router.group != nil {
 			handlers = append(handlers, router.group.middlewares...)
 		}
+
 		handlers = append(handlers, router.middlewares...)
 		handlers = append(handlers, router.Headler)
 
-		// v := 0
 		for _, handler := range handlers {
-			handler.ServeNET(ctx, conn, v)
+			handler.Serve(ctx, conn, v)
 		}
 	}()
 }
