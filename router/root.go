@@ -17,6 +17,7 @@ type Root struct {
 	groups       map[*Group]struct{}       // 分组 middle
 	defaultGroup *Group                    // 默认分组
 	middlewares  []handle.Handler          // 全局 middle
+	unknown      handle.Handler            // 404 处理
 }
 
 // NewRoot root
@@ -78,6 +79,12 @@ func (r *Root) Use(mid ...handle.Handler) *Root {
 	return r
 }
 
+// NotFound 未知消息处理
+func (r *Root) NotFound(h handle.Handler) *Root {
+	r.unknown = h
+	return r
+}
+
 // Dispatch 分发
 func (r *Root) Dispatch(conn conner.Conner, msg message.Messager) {
 	r.dispatch(conn, msg)
@@ -86,6 +93,9 @@ func (r *Root) Dispatch(conn conner.Conner, msg message.Messager) {
 func (r *Root) dispatch(conn conner.Conner, msg message.Messager) {
 	router := r.routers[msg.GetMsgID()]
 	if router == nil {
+		ctx := context.Background()
+		req := request.NewRequest(msg, conn)
+		r.unknown.Serve(ctx, req)
 		return
 	}
 

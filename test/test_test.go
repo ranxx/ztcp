@@ -19,6 +19,7 @@ import (
 	"github.com/ranxx/ztcp/pkg/pack"
 	"github.com/ranxx/ztcp/request"
 	"github.com/ranxx/ztcp/router"
+	"github.com/ranxx/ztcp/server"
 	ttt "github.com/ranxx/ztcp/ttttt"
 	"github.com/ranxx/ztcp/ttttt/ttttt"
 )
@@ -491,4 +492,38 @@ func TestAbort(t *testing.T) {
 		mmm.AddConn(cc)
 		cc.Start()
 	}
+}
+
+func TestServer(t *testing.T) {
+	route := router.NewRouter(0, handle.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println(r.M.GetMsgID(), fmt.Sprintf("%s", r.M.GetData()))
+	}))
+	route2 := router.NewRouter(2, handle.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println(r.M.GetMsgID(), fmt.Sprintf("%s", r.M.GetData()))
+	}))
+	root := router.NewRoot().AddRouter(route, route2).NotFound(handle.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println("未知消息", r.M.GetMsgID(), fmt.Sprintf("%s", r.M.GetData()))
+	}))
+
+	srv := server.NewServer("tcp", "", 12351, server.WithConnOptions(conn.WithDispatcher(dispatch.DefaultDispatcher(root))))
+
+	go func() {
+		time.Sleep(time.Second)
+		c, err := net.Dial("tcp", ":12351")
+		if err != nil {
+			panic(err)
+		}
+		cc := conn.NewConn(0, c)
+		writer := cc.Writer()
+		i := 0
+		for ; ; i++ {
+			time.Sleep(time.Second)
+			writer.Write(0, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.Write(1, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.Write(2, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.Write(3, []byte(fmt.Sprintf("我再说 %d", i)))
+		}
+	}()
+
+	fmt.Println(srv.Start())
 }

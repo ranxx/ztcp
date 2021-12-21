@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/ranxx/ztcp/index"
+	"github.com/ranxx/ztcp/conn"
+	"github.com/ranxx/ztcp/conner"
 )
 
 // Server ...
@@ -24,15 +25,18 @@ func NewServer(network, ip string, port int, opts ...Option) *Server {
 		v(opt)
 	}
 
+	if opt.genConner == nil {
+		opt.genConner = func(i int64, c net.Conn) conner.Conner {
+			return conn.NewConn(i, c, opt.genOptions...)
+		}
+	}
+
 	return &Server{
-		indexMgr: index.NewIndexI64(),
-		opt:      opt,
 		network:  network,
 		ip:       ip,
 		port:     port,
-		manager:  &Manager{},
-		close:    make(chan struct{}),
 		listener: opt.listener,
+		opt:      opt,
 	}
 }
 
@@ -44,36 +48,31 @@ func (s *Server) Start() error {
 			return err
 		}
 		s.listener = listener
-
 		s.opt.listenAfter(s.listener)
 	}
-
-	go s.doListener()
+	s.doListener()
 	return nil
 }
 
 func (s *Server) doListener() {
 	defer func() {
-		s.manager.Close()
+		s.opt.manager.Close()
 	}()
 	for {
 		select {
-		case <-s.close:
+		case <-s.opt.close:
 			return
 		default:
 		}
 
-		conn, err := s.listener.Accept()
+		cn, err := s.listener.Accept()
 		if err != nil {
 			// 是否退出
 			panic(err)
 		}
-
-		c := NewConn(conn, s.indexMgr.NewIndex(), Options2Option(s.opt))
-
-		s.opt.newConnMiddle(c)
-
-		// 具体什么时候开启读写
-		s.manager.AddConn(c)
+		conner := s.opt.genConner(s.opt.indexMgr.NewIndex(), cn)
+		s.opt.manager.AddConn(conner)
+		// 开启
+		conner.Start()
 	}
 }
