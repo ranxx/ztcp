@@ -3,8 +3,8 @@ package router
 import (
 	"net"
 
-	"github.com/ranxx/ztcp/message"
 	"github.com/ranxx/ztcp/options"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Router 路由
@@ -41,5 +41,10 @@ func (r *Router) Use(mid ...Handler) *Router {
 // SetGroup 设置分组
 func (r *Router) SetGroup(g *Group) *Router {
 	r.group = g
+	return r
+}
+
+// Bind 绑定消息
+func (r *Router) Bind() *Router {
 	return r
 }

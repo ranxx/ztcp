@@ -1,15 +1,13 @@
 package conn
 
 import (
-	"github.com/ranxx/ztcp/dispatch"
-	"github.com/ranxx/ztcp/message"
-	"github.com/ranxx/ztcp/pack"
-	"github.com/ranxx/ztcp/read"
+	"github.com/ranxx/ztcp/pkg/dispatch"
+	"github.com/ranxx/ztcp/pkg/io/read"
+	"github.com/ranxx/ztcp/pkg/io/write"
+	"github.com/ranxx/ztcp/pkg/message"
+	"github.com/ranxx/ztcp/pkg/pack"
 	"github.com/ranxx/ztcp/router"
-	"github.com/ranxx/ztcp/write"
 )
-
-// type writeFunc func() (pack.MsgType, interface{})
 
 // Options ...
 type Options struct {
@@ -29,7 +27,7 @@ func DefaultOptions() *Options {
 		name:          "conn",
 		close:         make(chan struct{}),
 		packer:        packer,
-		dispatcher:    dispatch.DefaultDispatcher(router.NewRoot()),
+		dispatcher:    dispatch.DefaultDispatcher(router.NewRoot(), nil),
 		reader:        read.DefaultReader(nil, read.WithPacker(packer)),
 		writer:        write.DefaultWriter(nil, write.WithPacker(packer)),
 		closeConnRead: false,

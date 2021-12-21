@@ -1,8 +1,8 @@
 package read
 
 import (
-	"github.com/ranxx/ztcp/message"
-	"github.com/ranxx/ztcp/pack"
+	"github.com/ranxx/ztcp/pkg/message"
+	"github.com/ranxx/ztcp/pkg/pack"
 )
 
 // Options ...

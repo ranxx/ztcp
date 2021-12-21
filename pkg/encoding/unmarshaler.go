@@ -3,7 +3,7 @@ package encoding
 import (
 	"reflect"
 
-	"github.com/ranxx/ztcp/message"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Unmarshaler 反序列化
@@ -21,11 +21,14 @@ func (w Unmarshal) Unmarshal(id message.MsgID, b []byte) (interface{}, error) {
 
 // WrapTypeUnmarshal wrap type
 // Type 必须为 point
-func WrapTypeUnmarshal(Type interface{}, unmarshal func([]byte, interface{}) error) Unmarshaler {
+func WrapTypeUnmarshal(Type interface{}, unmarshal func([]byte, interface{}) error) Unmarshal {
 	v := reflect.TypeOf(Type)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
 	return Unmarshal(func(id message.MsgID, b []byte) (interface{}, error) {
 		tmp := reflect.New(v)
-		e := unmarshal(b, tmp)
+		e := unmarshal(b, tmp.Interface())
 		return tmp, e
 	})
 }

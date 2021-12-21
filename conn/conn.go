@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ranxx/ztcp/read"
-	"github.com/ranxx/ztcp/write"
+	"github.com/ranxx/ztcp/pkg/io/read"
+	"github.com/ranxx/ztcp/pkg/io/write"
 )
 
 // Conner conn
@@ -26,11 +26,11 @@ type Conner interface {
 
 // conn ...
 type conn struct {
-	net.Conn       // net
-	id       int64 // 唯一标识
-	rlock    sync.Mutex
-	wlock    sync.Mutex
-	opt      *Options // 可选项
+	net.Conn            // net
+	id       int64      // 唯一标识
+	rlock    sync.Mutex // 读锁
+	wlock    sync.Mutex // 写锁
+	opt      *Options   // 可选项
 }
 
 // NewConn ...

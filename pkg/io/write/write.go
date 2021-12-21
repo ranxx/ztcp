@@ -2,20 +2,19 @@ package write
 
 import (
 	"io"
-	"reflect"
 
-	"github.com/ranxx/ztcp/message"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Writer ...
 type Writer interface {
 	With(io.Writer) Writer
 
-	Write(message.MsgID, []byte) error
+	Write(message.MsgID, []byte) (int, error)
 
-	WriteMessager(message.Messager) error
+	WriteMessager(message.Messager) (int, error)
 
-	WriteValue(interface{}) error
+	WriteValue(interface{}) (int, error)
 }
 
 // 最终 打包之后发给conn
@@ -44,31 +43,34 @@ func (w *writer) With(iw io.Writer) Writer {
 	return w
 }
 
-func (w *writer) Write(id message.MsgID, data []byte) error {
+func (w *writer) Write(id message.MsgID, data []byte) (int, error) {
 	msg := w.opt.genMessage(id, data)
 
 	return w.WriteMessager(msg)
 }
 
-func (w *writer) WriteMessager(msg message.Messager) error {
+func (w *writer) WriteMessager(msg message.Messager) (int, error) {
 	data, err := w.opt.packer.Pack(msg)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	if _, err := w.Writer.Write(data); err != nil {
-		return err
+	n, err := w.Writer.Write(data)
+	if err != nil {
+		return n, err
 	}
 
-	return nil
+	return n, nil
 }
 
-func (w *writer) WriteValue(v interface{}) error {
-	id := w.opt.typeMsgID[reflect.TypeOf(v)]
+func (w *writer) WriteValue(v interface{}) (int, error) {
+	key := typeUniqueString(v)
+
+	id := w.opt.typeMsgID[key]
 
 	data, err := w.opt.marshal.Marshal(id, v)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	return w.Write(id, data)

@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/ranxx/ztcp/encoding"
-	"github.com/ranxx/ztcp/message"
-	"github.com/ranxx/ztcp/pack"
+	"github.com/ranxx/ztcp/pkg/encoding"
+	"github.com/ranxx/ztcp/pkg/message"
+	"github.com/ranxx/ztcp/pkg/pack"
 )
 
 // Options ...
 type Options struct {
 	genMessage message.GenMessage
 	packer     pack.Packer
-	typeMsgID  map[reflect.Type]message.MsgID
+	typeMsgID  map[string]message.MsgID
 	marshal    encoding.Marshaler
 }
 
@@ -26,6 +26,7 @@ func DefaultOptions() *Options {
 	return &Options{
 		genMessage: message.DefaultMessager,
 		packer:     pack.DefaultPacker(message.DefaultMessager),
+		typeMsgID:  make(map[string]message.MsgID),
 		marshal: encoding.NewMarshaler(encoding.Marshal(func(mi message.MsgID, i interface{}) ([]byte, error) {
 			if b, ok := i.([]byte); ok {
 				return b, nil
@@ -52,12 +53,10 @@ func WithPacker(packer pack.Packer) Option {
 // WithTypeMsgID 消息类型的id
 func WithTypeMsgID(tfunc ...func() (interface{}, message.MsgID)) Option {
 	return func(o *Options) {
-		o.typeMsgID = make(map[reflect.Type]message.MsgID)
 		for _, f := range tfunc {
 			t, v := f()
-			tt := reflect.TypeOf(t)
-			fmt.Println(tt.Kind())
-			o.typeMsgID[tt] = v
+			key := typeUniqueString(t)
+			o.typeMsgID[key] = v
 		}
 	}
 }
@@ -67,4 +66,18 @@ func WithMarshal(marshal encoding.Marshaler) Option {
 	return func(o *Options) {
 		o.marshal = marshal
 	}
+}
+
+func typeUniqueString(i interface{}) string {
+	t := reflect.TypeOf(i)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	// 如果是基础类型
+	if len(t.Name()) <= 0 && len(t.PkgPath()) <= 0 {
+		return t.Kind().String()
+	}
+
+	return fmt.Sprintf("%s.%s", t.PkgPath(), t.Name())
 }

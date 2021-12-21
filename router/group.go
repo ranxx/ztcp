@@ -1,6 +1,6 @@
 package router
 
-import "github.com/ranxx/ztcp/message"
+import "github.com/ranxx/ztcp/pkg/message"
 
 // Group 分组
 type Group struct {

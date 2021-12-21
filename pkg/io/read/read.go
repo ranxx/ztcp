@@ -3,7 +3,7 @@ package read
 import (
 	"io"
 
-	"github.com/ranxx/ztcp/message"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Reader reader

@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	"github.com/ranxx/ztcp/message"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Marshaler 序列化

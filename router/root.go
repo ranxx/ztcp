@@ -4,8 +4,8 @@ import (
 	"context"
 	"net"
 
-	"github.com/ranxx/ztcp/message"
 	"github.com/ranxx/ztcp/options"
+	"github.com/ranxx/ztcp/pkg/message"
 )
 
 // Handler ...
