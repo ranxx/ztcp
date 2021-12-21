@@ -2,25 +2,13 @@ package router
 
 import (
 	"context"
-	"net"
 
+	"github.com/ranxx/ztcp/conner"
+	"github.com/ranxx/ztcp/handle"
 	"github.com/ranxx/ztcp/options"
 	"github.com/ranxx/ztcp/pkg/message"
 	"github.com/ranxx/ztcp/request"
 )
-
-// Handler ...
-type Handler interface {
-	Serve(context.Context, *request.Request)
-}
-
-// WrapHandler ...
-type WrapHandler func(context.Context, *request.Request)
-
-// Serve ...
-func (w WrapHandler) Serve(ctx context.Context, req *request.Request) {
-	w(ctx, req)
-}
 
 // Root ...
 type Root struct {
@@ -28,7 +16,7 @@ type Root struct {
 	routers      map[message.MsgID]*Router // 真正的 router
 	groups       map[*Group]struct{}       // 分组 middle
 	defaultGroup *Group                    // 默认分组
-	middlewares  []Handler                 // 全局 middle
+	middlewares  []handle.Handler          // 全局 middle
 }
 
 // NewRoot root
@@ -36,7 +24,7 @@ func NewRoot(opt ...*options.Options) *Root {
 	r := Root{
 		routers:     make(map[message.MsgID]*Router),
 		groups:      make(map[*Group]struct{}),
-		middlewares: make([]Handler, 0, 10),
+		middlewares: make([]handle.Handler, 0, 10),
 	}
 	g := NewGroup()
 	g.root = &r
@@ -46,7 +34,7 @@ func NewRoot(opt ...*options.Options) *Root {
 
 // NewGroup 新建 group
 func (r *Root) NewGroup() *Group {
-	group := Group{middlewares: make([]Handler, 0, 10), root: r}
+	group := Group{middlewares: make([]handle.Handler, 0, 10), root: r}
 	r.groups[&group] = struct{}{}
 	return &group
 }
@@ -85,17 +73,17 @@ func (r *Root) AddRouter(rts ...*Router) *Root {
 }
 
 // Use 添加中间件，适用于所有路由
-func (r *Root) Use(mid ...Handler) *Root {
+func (r *Root) Use(mid ...handle.Handler) *Root {
 	r.middlewares = append(r.middlewares, mid...)
 	return r
 }
 
 // Dispatch 分发
-func (r *Root) Dispatch(conn net.Conn, msg message.Messager) {
+func (r *Root) Dispatch(conn conner.Conner, msg message.Messager) {
 	r.dispatch(conn, msg)
 }
 
-func (r *Root) dispatch(conn net.Conn, msg message.Messager) {
+func (r *Root) dispatch(conn conner.Conner, msg message.Messager) {
 	router := r.routers[msg.GetMsgID()]
 	if router == nil {
 		return
@@ -106,7 +94,7 @@ func (r *Root) dispatch(conn net.Conn, msg message.Messager) {
 		ctx := context.Background()
 		req := request.NewRequest(msg, conn)
 
-		handlers := make([]Handler, 0, 30)
+		handlers := make([]handle.Handler, 0, 30)
 		handlers = append(handlers, r.middlewares...)
 
 		// 如果group被删了，不应该触发 group的中间件

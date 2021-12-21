@@ -10,18 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ranxx/ztcp/conner"
 	"github.com/ranxx/ztcp/pkg/io/read"
 	"github.com/ranxx/ztcp/pkg/io/write"
 )
-
-// Conner conn
-type Conner interface {
-	net.Conn
-	ID() int64
-	Start()
-	Writer() write.Writer
-	Reader() read.Reader
-}
 
 // conn ...
 type conn struct {
@@ -33,7 +25,7 @@ type conn struct {
 }
 
 // NewConn ...
-func NewConn(id int64, _conn net.Conn, opts ...Option) Conner {
+func NewConn(id int64, _conn net.Conn, opts ...Option) conner.Conner {
 	conn := &conn{
 		id:    id,
 		Conn:  _conn,

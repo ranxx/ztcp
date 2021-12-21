@@ -3,6 +3,7 @@ package router
 import (
 	"net"
 
+	"github.com/ranxx/ztcp/handle"
 	"github.com/ranxx/ztcp/options"
 	"github.com/ranxx/ztcp/pkg/message"
 )
@@ -10,15 +11,15 @@ import (
 // Router 路由
 type Router struct {
 	opt         *options.Options
-	middlewares []Handler
+	middlewares []handle.Handler
 	conn        net.Conn
 	group       *Group
 	MsgID       message.MsgID
-	Headler     Handler
+	Headler     handle.Handler
 }
 
 // NewRouter 新加路由
-func NewRouter(msgid message.MsgID, handler Handler, opts ...options.Option) *Router {
+func NewRouter(msgid message.MsgID, handler handle.Handler, opts ...options.Option) *Router {
 	opt := options.DefaultOptions()
 
 	for _, v := range opts {
@@ -33,7 +34,7 @@ func NewRouter(msgid message.MsgID, handler Handler, opts ...options.Option) *Ro
 }
 
 // Use 添加中间件，适用于该路由
-func (r *Router) Use(mid ...Handler) *Router {
+func (r *Router) Use(mid ...handle.Handler) *Router {
 	r.middlewares = append(r.middlewares, mid...)
 	return r
 }

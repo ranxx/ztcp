@@ -1,20 +1,23 @@
 package router
 
-import "github.com/ranxx/ztcp/pkg/message"
+import (
+	"github.com/ranxx/ztcp/handle"
+	"github.com/ranxx/ztcp/pkg/message"
+)
 
 // Group 分组
 type Group struct {
-	middlewares []Handler // 只是删除middle
+	middlewares []handle.Handler // 只是删除middle
 
 	root *Root
 }
 
 // NewGroup group
 func NewGroup() *Group {
-	return &Group{middlewares: make([]Handler, 0, 10), root: &Root{
+	return &Group{middlewares: make([]handle.Handler, 0, 10), root: &Root{
 		routers:     make(map[message.MsgID]*Router),
 		groups:      make(map[*Group]struct{}),
-		middlewares: make([]Handler, 0, 10),
+		middlewares: make([]handle.Handler, 0, 10),
 	}}
 }
 
@@ -28,7 +31,7 @@ func (r *Group) AddRouter(rts ...*Router) *Group {
 }
 
 // Use 添加中间件，适用于当前分组
-func (r *Group) Use(mid ...Handler) *Group {
+func (r *Group) Use(mid ...handle.Handler) *Group {
 	r.middlewares = append(r.middlewares, mid...)
 	return r
 }

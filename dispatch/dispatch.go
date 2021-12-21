@@ -1,15 +1,14 @@
 package dispatch
 
 import (
-	"net"
-
+	"github.com/ranxx/ztcp/conner"
 	"github.com/ranxx/ztcp/pkg/message"
 	"github.com/ranxx/ztcp/router"
 )
 
 // Dispatcher ...
 type Dispatcher interface {
-	Dispatch(message.Messager, net.Conn)
+	Dispatch(message.Messager, conner.Conner)
 }
 
 type dispatcher struct {
@@ -33,7 +32,7 @@ func DefaultDispatcher(r *router.Root, opts ...Option) Dispatcher {
 	}
 }
 
-func (d *dispatcher) Dispatch(msg message.Messager, conn net.Conn) {
+func (d *dispatcher) Dispatch(msg message.Messager, conn conner.Conner) {
 	// 分发
 	d.root.Dispatch(conn, msg)
 }

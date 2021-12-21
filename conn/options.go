@@ -1,7 +1,7 @@
 package conn
 
 import (
-	"github.com/ranxx/ztcp/pkg/dispatch"
+	"github.com/ranxx/ztcp/dispatch"
 	"github.com/ranxx/ztcp/pkg/io/read"
 	"github.com/ranxx/ztcp/pkg/io/write"
 	"github.com/ranxx/ztcp/pkg/message"

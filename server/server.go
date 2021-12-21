@@ -9,12 +9,11 @@ import (
 
 // Server ...
 type Server struct {
-	opt     *Options
-	network string
-	ip      string
-	port    int
-
+	network  string
+	ip       string
+	port     int
 	listener net.Listener
+	opt      *Options
 }
 
 // NewServer new

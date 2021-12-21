@@ -19,11 +19,13 @@ type (
 
 // Options ...
 type Options struct {
-	name               string
-	indexMgr           *index.Index64
-	encode             Encode                    // 消息编码
-	decode             Decode                    // 消息解码
-	manager            conn.IManager             // conn 的管理
+	name     string
+	indexMgr *index.Index64
+	manager  *conn.Manager
+
+	encode Encode // 消息编码
+	decode Decode // 消息解码
+	// manager            conn.IManager             // conn 的管理
 	newConnWithNetConn func(net.Conn) conn.IConn // 通过 net.Conn 生成 Conn
 	listener           net.Listener
 	listenAfter        func(net.Listener) // 监听之后
