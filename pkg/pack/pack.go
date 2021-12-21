@@ -39,7 +39,6 @@ func (p *packer) UnpackHead(body []byte) (message.Messager, error) {
 	reader := bytes.NewBuffer(body)
 
 	msg := p.gen(message.MsgID(0), nil)
-
 	msgid := msg.GetMsgID()
 	length := msg.GetDataLength()
 
@@ -51,6 +50,7 @@ func (p *packer) UnpackHead(body []byte) (message.Messager, error) {
 	if err := binary.Read(reader, binary.BigEndian, &length); err != nil {
 		return nil, err
 	}
+
 	msg.SetMsgID(msgid)
 	msg.SetDataLength(length)
 	return msg, nil

@@ -6,7 +6,6 @@
 package conn
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -85,7 +84,6 @@ func (c *conn) gReading() {
 		select {
 		case <-c.opt.close:
 		default:
-
 			c.reading()
 		}
 	}
@@ -94,7 +92,6 @@ func (c *conn) gReading() {
 func (c *conn) reading() error {
 	msg, err := c.opt.reader.Read()
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	go c.opt.dispatcher.Dispatch(msg, c)

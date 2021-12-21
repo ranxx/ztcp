@@ -33,8 +33,8 @@ func DefaultReader(r io.Reader, opts ...Option) Reader {
 	}
 }
 
-func (r *reader) With(nio io.Reader) Reader {
-	r.Reader = nio
+func (r *reader) With(ir io.Reader) Reader {
+	r.Reader = ir
 	return r
 }
 

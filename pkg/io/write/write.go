@@ -14,13 +14,16 @@ type Writer interface {
 
 	WriteMessager(message.Messager) (int, error)
 
-	WriteValue(interface{}) (int, error)
+	// Marshal(v) -> Write
+	WriteValue(v interface{}) (int, error)
+
+	// Marshal(v) -> Write
+	WriteValueWithID(id message.MsgID, v interface{}) (int, error)
 }
 
 // 最终 打包之后发给conn
 type writer struct {
 	io.Writer
-
 	opt *Options
 }
 
@@ -64,10 +67,26 @@ func (w *writer) WriteMessager(msg message.Messager) (int, error) {
 }
 
 func (w *writer) WriteValue(v interface{}) (int, error) {
+	if v == nil {
+		return 0, nil
+	}
+
 	key := typeUniqueString(v)
 
 	id := w.opt.typeMsgID[key]
 
+	data, err := w.opt.marshal.Marshal(id, v)
+	if err != nil {
+		return 0, err
+	}
+
+	return w.Write(id, data)
+}
+
+func (w *writer) WriteValueWithID(id message.MsgID, v interface{}) (int, error) {
+	if v == nil {
+		return 0, nil
+	}
 	data, err := w.opt.marshal.Marshal(id, v)
 	if err != nil {
 		return 0, err

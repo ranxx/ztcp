@@ -6,19 +6,20 @@ import (
 
 	"github.com/ranxx/ztcp/options"
 	"github.com/ranxx/ztcp/pkg/message"
+	"github.com/ranxx/ztcp/request"
 )
 
 // Handler ...
 type Handler interface {
-	Serve(context.Context, net.Conn, interface{})
+	Serve(context.Context, *request.Request)
 }
 
 // WrapHandler ...
-type WrapHandler func(context.Context, net.Conn, interface{})
+type WrapHandler func(context.Context, *request.Request)
 
 // Serve ...
-func (w WrapHandler) Serve(ctx context.Context, c net.Conn, v interface{}) {
-	w(ctx, c, v)
+func (w WrapHandler) Serve(ctx context.Context, req *request.Request) {
+	w(ctx, req)
 }
 
 // Root ...
@@ -90,12 +91,12 @@ func (r *Root) Use(mid ...Handler) *Root {
 }
 
 // Dispatch 分发
-func (r *Root) Dispatch(msgid message.MsgID, conn net.Conn, v interface{}) {
-	r.dispatch(msgid, conn, v)
+func (r *Root) Dispatch(conn net.Conn, msg message.Messager) {
+	r.dispatch(conn, msg)
 }
 
-func (r *Root) dispatch(msgid message.MsgID, conn net.Conn, v interface{}) {
-	router := r.routers[msgid]
+func (r *Root) dispatch(conn net.Conn, msg message.Messager) {
+	router := r.routers[msg.GetMsgID()]
 	if router == nil {
 		return
 	}
@@ -103,6 +104,8 @@ func (r *Root) dispatch(msgid message.MsgID, conn net.Conn, v interface{}) {
 	// TODO: worker
 	go func() {
 		ctx := context.Background()
+		req := request.NewRequest(msg, conn)
+
 		handlers := make([]Handler, 0, 30)
 		handlers = append(handlers, r.middlewares...)
 
@@ -115,7 +118,10 @@ func (r *Root) dispatch(msgid message.MsgID, conn net.Conn, v interface{}) {
 		handlers = append(handlers, router.Headler)
 
 		for _, handler := range handlers {
-			handler.Serve(ctx, conn, v)
+			if req.GetAbort() {
+				break
+			}
+			handler.Serve(ctx, req)
 		}
 	}()
 }

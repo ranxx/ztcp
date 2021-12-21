@@ -12,10 +12,10 @@ import (
 
 	"github.com/ranxx/ztcp/conn"
 	"github.com/ranxx/ztcp/pkg/dispatch"
-	"github.com/ranxx/ztcp/pkg/encoding"
 	"github.com/ranxx/ztcp/pkg/io/write"
 	messagerr "github.com/ranxx/ztcp/pkg/message"
 	"github.com/ranxx/ztcp/pkg/pack"
+	"github.com/ranxx/ztcp/request"
 	"github.com/ranxx/ztcp/router"
 	ttt "github.com/ranxx/ztcp/ttttt"
 	"github.com/ranxx/ztcp/ttttt/ttttt"
@@ -81,32 +81,40 @@ func test03(msg messager) {
 	fmt.Println(v.MethodByName("GetID").Call(nil)[0].Int())
 }
 
+func test04(i interface{}) {
+	fmt.Println(reflect.TypeOf(i).Kind().String())
+}
+
 func Test03(t *testing.T) {
 	msg := Message{ID: 4}
-	test03(&msg)
-	test03(msg)
+	test04(&msg)
+	test04(msg)
 	fmt.Println("-------------------------")
-	msg2 := ttttt.Message{ID: 5}
-	test03(&msg2)
-	test03(msg2)
-	fmt.Println("-------------------------")
-	msg3 := ttt.Message{ID: 5}
-	test03(&msg3)
-	test03(msg3)
+	test04(1)
+	i := 10
+	test04(i)
+	test04(&i)
+	// msg2 := ttttt.Message{ID: 5}
+	// test03(&msg2)
+	// test03(msg2)
+	// fmt.Println("-------------------------")
+	// msg3 := ttt.Message{ID: 5}
+	// test03(&msg3)
+	// test03(msg3)
 }
 
 func Test04(t *testing.T) {
 	mmm := conn.NewManager()
-	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("Hhhhhhh", string(s), ok)
 	}))
-	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-2", string(s), ok)
 	}))
-	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-3", mmm.Get(1).RemoteAddr(), string(s), ok)
 	}))
 	root := router.NewRoot().AddRouter(route1, route2, route3)
@@ -149,7 +157,7 @@ func Test04(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		cc := conn.NewConn(idex, c, conn.WithDispatcher(dispatch.DefaultDispatcher(root, nil)))
+		cc := conn.NewConn(idex, c, conn.WithDispatcher(dispatch.DefaultDispatcher(root)))
 		mmm.AddConn(cc)
 		cc.Start()
 	}
@@ -157,20 +165,20 @@ func Test04(t *testing.T) {
 
 func Test05(t *testing.T) {
 	mmm := conn.NewManager()
-	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("Hhhhhhh", string(s), ok)
 	}))
-	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-2", string(s), ok)
 	}))
-	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-3", mmm.Get(1).RemoteAddr(), string(s), ok)
 	}))
-	route4 := router.NewRouter(messagerr.MsgID(4), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route4 := router.NewRouter(messagerr.MsgID(4), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-4", mmm.Get(1).RemoteAddr(), string(s), ok)
 	}))
 	root := router.NewRoot().AddRouter(route1, route2, route3, route4)
@@ -232,33 +240,59 @@ func TestStruct(t *testing.T) {
 	type msgType struct {
 		UserName string `json:"user_name"`
 	}
-	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route1 := router.NewRouter(messagerr.MsgID(1), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("Hhhhhhh", string(s), ok)
 	}))
-	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
+	route2 := router.NewRouter(messagerr.MsgID(2), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
 		log.Println("msg-2", string(s), ok)
 	}))
-	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
-		log.Println("msg-3", mmm.Get(1).RemoteAddr(), string(s), ok)
+	route3 := router.NewRouter(messagerr.MsgID(3), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
+		log.Println("msg-3", r.C.RemoteAddr(), string(s), ok)
 	}))
-	route4 := router.NewRouter(messagerr.MsgID(4), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		s, ok := i.([]byte)
-		log.Println("msg-4", mmm.Get(1).RemoteAddr(), string(s), ok)
+	route4 := router.NewRouter(messagerr.MsgID(4), router.WrapHandler(func(c context.Context, r *request.Request) {
+		s, ok := r.M.GetData(), true
+		log.Println("msg-4", r.C.RemoteAddr(), string(s), ok)
 	}))
-	route5 := router.NewRouter(messagerr.MsgID(5), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		log.Println("msg-5", mmm.Get(1).RemoteAddr(), reflect.TypeOf(i).Kind(), fmt.Sprintf("%#v", i))
+	route5 := router.NewRouter(messagerr.MsgID(5), router.WrapHandler(func(c context.Context, r *request.Request) {
+		tmp := msgType{}
+		err := json.Unmarshal(r.M.GetData(), &tmp)
+		log.Println("msg-5", r.C.RemoteAddr(), fmt.Sprintf("%#v", tmp), err)
 	}))
-	route6 := router.NewRouter(messagerr.MsgID(6), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		log.Println("msg-6", mmm.Get(1).RemoteAddr(), reflect.TypeOf(i).Kind(), fmt.Sprintf("%#v", i))
+	route6 := router.NewRouter(messagerr.MsgID(6), router.WrapHandler(func(c context.Context, r *request.Request) {
+		tmp := ttt.Message{}
+		err := json.Unmarshal(r.M.GetData(), &tmp)
+		log.Println("msg-6", r.C.RemoteAddr(), fmt.Sprintf("%#v", tmp), err)
 	}))
-	route7 := router.NewRouter(messagerr.MsgID(7), router.WrapHandler(func(c1 context.Context, c2 net.Conn, i interface{}) {
-		// TODO: 是否在这里进行反序列化比较好
-		log.Println("msg-7", mmm.Get(1).RemoteAddr(), reflect.TypeOf(i).Kind(), fmt.Sprintf("%#v", i))
+	route7 := router.NewRouter(messagerr.MsgID(7), router.WrapHandler(func(c context.Context, r *request.Request) {
+		tmp := ttttt.Message{}
+		err := json.Unmarshal(r.M.GetData(), &tmp)
+		log.Println("msg-7", r.C.RemoteAddr(), fmt.Sprintf("%#v", tmp), err)
 	}))
-	root := router.NewRoot().AddRouter(route1, route2, route3, route4, route5, route6, route7)
+	route8 := router.NewRouter(messagerr.MsgID(8), router.WrapHandler(func(c context.Context, r *request.Request) {
+		tmp := ttttt.Message{}
+		err := json.Unmarshal(r.M.GetData(), &tmp)
+		log.Println("msg-8", r.C.RemoteAddr(), fmt.Sprintf("%#v", tmp), err)
+	}))
+	route9 := router.NewRouter(messagerr.MsgID(9), router.WrapHandler(func(c context.Context, r *request.Request) {
+		tmp := ttttt.Message{}
+		err := json.Unmarshal(r.M.GetData(), &tmp)
+		log.Println("msg-9", r.C.RemoteAddr(), fmt.Sprintf("%#v", tmp), err)
+	}))
+	root := router.NewRoot().AddRouter(route1, route2, route3, route4, route5, route6, route7, route8, route9)
+
+	root.Use(router.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println("我是mid - 1", r.M.GetMsgID())
+	}))
+	root.Use(router.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println("我是mid - 2", r.M.GetMsgID())
+		r.Abort()
+	}))
+	root.Use(router.WrapHandler(func(c context.Context, r *request.Request) {
+		log.Println("我是mid - 3", r.M.GetMsgID())
+	}))
 
 	list, err := net.Listen("tcp", ":12351")
 	if err != nil {
@@ -308,37 +342,22 @@ func TestStruct(t *testing.T) {
 			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 27}))
 			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 28}))
 			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 29}))
-			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 30}))
-			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 31}))
-			fmt.Println(writer.WriteValue(&ttttt.Message{ID: 32}))
+			fmt.Println(writer.WriteValueWithID(8, &ttttt.Message{ID: 30}))
+			fmt.Println(writer.WriteValueWithID(8, &ttttt.Message{ID: 31}))
+			fmt.Println(writer.WriteValueWithID(8, &ttttt.Message{ID: 32}))
+			fmt.Println(writer.WriteValueWithID(9, &ttttt.Message{ID: 32}))
+			fmt.Println(writer.WriteValueWithID(8, &ttttt.Message{ID: 32}))
+			fmt.Println(writer.WriteValueWithID(8, &ttttt.Message{ID: 32}))
 		}
 	}()
 
-	unmarshaler := encoding.NewUnmarshaler(encoding.Unmarshal(func(mi messagerr.MsgID, b []byte) (interface{}, error) {
-		return b, nil
-	}), map[messagerr.MsgID]encoding.Unmarshal{5: func(mi messagerr.MsgID, b []byte) (interface{}, error) {
-		tmp := &msgType{}
-		err := json.Unmarshal(b, tmp)
-		// fmt.Println("unm", mi, fmt.Sprintf("%#v", tmp))
-		return tmp, err
-	}, 6: func(mi messagerr.MsgID, b []byte) (interface{}, error) {
-		tmp := &ttt.Message{}
-		err := json.Unmarshal(b, tmp)
-		// fmt.Println("unm", mi, fmt.Sprintf("%#v", tmp))
-		return tmp, err
-	}, 7: func(mi messagerr.MsgID, b []byte) (interface{}, error) {
-		tmp := &ttttt.Message{}
-		err := json.Unmarshal(b, tmp)
-		// fmt.Println("unm", mi, fmt.Sprintf("%#v", tmp))
-		return tmp, err
-	}})
 	for {
 		idex++
 		c, err := list.Accept()
 		if err != nil {
 			panic(err)
 		}
-		cc := conn.NewConn(idex, c, conn.WithDispatcher(dispatch.DefaultDispatcher(root, unmarshaler)))
+		cc := conn.NewConn(idex, c, conn.WithDispatcher(dispatch.DefaultDispatcher(root)))
 		mmm.AddConn(cc)
 		cc.Start()
 	}

@@ -6,14 +6,12 @@ import (
 	"github.com/ranxx/ztcp/pkg/io/write"
 	"github.com/ranxx/ztcp/pkg/message"
 	"github.com/ranxx/ztcp/pkg/pack"
-	"github.com/ranxx/ztcp/router"
 )
 
 // Options ...
 type Options struct {
 	name          string
 	close         chan struct{}
-	packer        pack.Packer         // 消息打包解包
 	dispatcher    dispatch.Dispatcher // 消息分发
 	reader        read.Reader
 	writer        write.Writer
@@ -26,8 +24,7 @@ func DefaultOptions() *Options {
 	opt := &Options{
 		name:          "conn",
 		close:         make(chan struct{}),
-		packer:        packer,
-		dispatcher:    dispatch.DefaultDispatcher(router.NewRoot(), nil),
+		dispatcher:    dispatch.DefaultDispatcher(nil),
 		reader:        read.DefaultReader(nil, read.WithPacker(packer)),
 		writer:        write.DefaultWriter(nil, write.WithPacker(packer)),
 		closeConnRead: false,
@@ -56,13 +53,6 @@ func WithName(name string) Option {
 func WithCloseChannel(ch chan struct{}) Option {
 	return func(o *Options) {
 		o.close = ch
-	}
-}
-
-// WithPacker 打包/解包 函数
-func WithPacker(p pack.Packer) Option {
-	return func(o *Options) {
-		o.packer = p
 	}
 }
 

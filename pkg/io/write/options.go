@@ -1,7 +1,6 @@
 package write
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -27,12 +26,7 @@ func DefaultOptions() *Options {
 		genMessage: message.DefaultMessager,
 		packer:     pack.DefaultPacker(message.DefaultMessager),
 		typeMsgID:  make(map[string]message.MsgID),
-		marshal: encoding.NewMarshaler(encoding.Marshal(func(mi message.MsgID, i interface{}) ([]byte, error) {
-			if b, ok := i.([]byte); ok {
-				return b, nil
-			}
-			return json.Marshal(i)
-		})),
+		marshal:    encoding.NewMarshaler(nil),
 	}
 }
 
