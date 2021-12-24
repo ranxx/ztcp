@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	gogo "github.com/gogo/protobuf/proto"
 	"github.com/ranxx/ztcp/pkg/message"
 )
 
@@ -28,11 +29,18 @@ func (w Marshal) Marshal(id message.MsgID, v interface{}) ([]byte, error) {
 }
 
 // DefaultMarshal 支持 ProvideMarshaler 接口
+//
 // 支持 基础类型(array, slice, struct, map)的 json序列化
+//
 // 不支持的将会 返回 unknown type
 func DefaultMarshal(id message.MsgID, v interface{}) ([]byte, error) {
 	if bytes, ok := v.(ProvideMarshaler); ok {
 		return bytes.Bytes()
+	}
+
+	// gogo proto
+	if gproto, ok := v.(gogo.Message); ok {
+		return gogo.Marshal(gproto)
 	}
 
 	if b, ok := v.([]byte); ok {

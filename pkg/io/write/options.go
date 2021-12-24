@@ -15,6 +15,7 @@ type Options struct {
 	packer     pack.Packer
 	typeMsgID  map[string]message.MsgID
 	marshal    encoding.Marshaler
+	stop       bool
 }
 
 // Option ...
@@ -59,6 +60,13 @@ func WithTypeMsgID(tfunc ...func() (interface{}, message.MsgID)) Option {
 func WithMarshal(marshal encoding.Marshaler) Option {
 	return func(o *Options) {
 		o.marshal = marshal
+	}
+}
+
+// WithStop ...
+func WithStop(stop bool) Option {
+	return func(o *Options) {
+		o.stop = stop
 	}
 }
 

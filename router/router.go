@@ -39,8 +39,8 @@ func (r *Router) Use(mid ...handle.Handler) *Router {
 	return r
 }
 
-// SetGroup 设置分组
-func (r *Router) SetGroup(g *Group) *Router {
+// WithGroup 设置分组
+func (r *Router) WithGroup(g *Group) *Router {
 	r.group = g
 	return r
 }

@@ -17,7 +17,7 @@ type Options struct {
 	listener    net.Listener
 	listenAfter func(net.Listener) // 监听之后
 	close       chan struct{}
-	genConner   func(int64, net.Conn) conner.Conner
+	genConner   func(int64, net.Conn) (conner.Conner, error)
 	genOptions  []conn.Option
 }
 
@@ -95,7 +95,7 @@ func WithClose(close chan struct{}) Option {
 
 // WithGenConner gen conner
 // 如果此选项被构造，会忽略 WithConnOptions 选项
-func WithGenConner(gen func(int64, net.Conn) conner.Conner) Option {
+func WithGenConner(gen func(int64, net.Conn) (conner.Conner, error)) Option {
 	return func(o *Options) {
 		o.genConner = gen
 	}
@@ -105,6 +105,6 @@ func WithGenConner(gen func(int64, net.Conn) conner.Conner) Option {
 // 如果已经构造了 genConner，将会忽略此选项，否则将会被使用
 func WithConnOptions(opts ...conn.Option) Option {
 	return func(o *Options) {
-		o.genOptions = opts
+		o.genOptions = append(o.genOptions, opts...)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/ranxx/ztcp/pkg/message"
+	"github.com/ranxx/ztcp/pkg/pack"
 )
 
 // Writer ...
@@ -19,6 +20,8 @@ type Writer interface {
 
 	// Marshal(v) -> Write
 	WriteValueWithID(id message.MsgID, v interface{}) (int, error)
+
+	Packer() pack.Packer
 }
 
 // 最终 打包之后发给conn
@@ -53,6 +56,10 @@ func (w *writer) Write(id message.MsgID, data []byte) (int, error) {
 }
 
 func (w *writer) WriteMessager(msg message.Messager) (int, error) {
+	if w.opt.stop {
+		return 0, nil
+	}
+
 	data, err := w.opt.packer.Pack(msg)
 	if err != nil {
 		return 0, err
@@ -93,4 +100,12 @@ func (w *writer) WriteValueWithID(id message.MsgID, v interface{}) (int, error) 
 	}
 
 	return w.Write(id, data)
+}
+
+func (w *writer) WithStop(stop bool) {
+	w.opt.stop = stop
+}
+
+func (w *writer) Packer() pack.Packer {
+	return w.opt.packer
 }

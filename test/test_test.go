@@ -419,7 +419,7 @@ func TestAbort(t *testing.T) {
 	}))
 	root.Use(handle.WrapHandler(func(c context.Context, r *request.Request) {
 		log.Println("我是mid - 2", r.M.GetMsgID())
-		r.Abort()
+		// r.Abort()
 	}))
 	root.Use(handle.WrapHandler(func(c context.Context, r *request.Request) {
 		log.Println("我是mid - 3", r.M.GetMsgID())
@@ -505,7 +505,7 @@ func TestServer(t *testing.T) {
 		log.Println("未知消息", r.M.GetMsgID(), fmt.Sprintf("%s", r.M.GetData()))
 	}))
 
-	srv := server.NewServer("tcp", "", 12351, server.WithConnOptions(conn.WithDispatcher(dispatch.DefaultDispatcher(root))))
+	srv := server.NewServer("tcp", ":12351", server.WithConnOptions(conn.WithDispatcher(dispatch.DefaultDispatcher(root))))
 
 	go func() {
 		time.Sleep(time.Second)

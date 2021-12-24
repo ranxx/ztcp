@@ -8,6 +8,7 @@ import (
 // Options ...
 type Options struct {
 	packer pack.Packer
+	stop   bool
 }
 
 // Option ...
@@ -17,6 +18,7 @@ type Option func(*Options)
 func DefaultOptions() *Options {
 	return &Options{
 		packer: pack.DefaultPacker(message.DefaultMessager),
+		stop:   false,
 	}
 }
 
@@ -24,5 +26,12 @@ func DefaultOptions() *Options {
 func WithPacker(packer pack.Packer) Option {
 	return func(o *Options) {
 		o.packer = packer
+	}
+}
+
+// WithStop ...
+func WithStop(stop bool) Option {
+	return func(o *Options) {
+		o.stop = stop
 	}
 }

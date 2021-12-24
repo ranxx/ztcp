@@ -40,5 +40,13 @@ func (m *Manager) Close() {
 	m.rwlock.RUnlock()
 	// 全部删除
 	m.rwlock.Lock()
+	defer m.rwlock.Unlock()
 	m.conns = map[int64]Conner{}
+}
+
+// Del 删除
+func (m *Manager) Del(id int64) {
+	m.rwlock.Lock()
+	defer m.rwlock.Unlock()
+	delete(m.conns, id)
 }

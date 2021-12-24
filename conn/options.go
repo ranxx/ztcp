@@ -10,24 +10,24 @@ import (
 
 // Options ...
 type Options struct {
-	name          string
-	close         chan struct{}
-	dispatcher    dispatch.Dispatcher // 消息分发
-	reader        read.Reader
-	writer        write.Writer
-	closeConnRead bool // 关闭写
+	name       string
+	close      chan struct{}
+	dispatcher dispatch.Dispatcher // 消息分发
+	reader     read.Reader
+	writer     write.Writer
+	extra      interface{} // 扩展字段
+	stop       bool
 }
 
 // DefaultOptions 默认
 func DefaultOptions() *Options {
 	packer := pack.DefaultPacker(message.DefaultMessager)
 	opt := &Options{
-		name:          "conn",
-		close:         make(chan struct{}),
-		dispatcher:    dispatch.DefaultDispatcher(nil),
-		reader:        read.DefaultReader(nil, read.WithPacker(packer)),
-		writer:        write.DefaultWriter(nil, write.WithPacker(packer)),
-		closeConnRead: false,
+		name:       "conn",
+		close:      make(chan struct{}),
+		dispatcher: dispatch.DefaultDispatcher(nil),
+		reader:     read.DefaultReader(nil, read.WithPacker(packer)),
+		writer:     write.DefaultWriter(nil, write.WithPacker(packer)),
 	}
 	return opt
 }
@@ -77,9 +77,16 @@ func WithWriter(writer write.Writer) Option {
 	}
 }
 
-// WithCloseConnRead 关闭读
-func WithCloseConnRead(close bool) Option {
+// WithExtra 扩展字段
+func WithExtra(extra interface{}) Option {
 	return func(o *Options) {
-		o.closeConnRead = close
+		o.extra = extra
+	}
+}
+
+// WithStop 暂停读
+func WithStop(stop bool) Option {
+	return func(o *Options) {
+		o.stop = stop
 	}
 }

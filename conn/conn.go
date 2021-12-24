@@ -22,6 +22,7 @@ type conn struct {
 	rlock    sync.Mutex // 读锁
 	wlock    sync.Mutex // 写锁
 	opt      *Options   // 可选项
+	closed   bool       // 关闭
 }
 
 // NewConn ...
@@ -69,22 +70,25 @@ func (c *conn) Write(b []byte) (n int, err error) {
 func (c *conn) gReading() {
 	// 是否开启
 	for {
-		if c.opt.closeConnRead {
-			time.Sleep(time.Second)
-			continue
+		if c.opt.stop {
+			time.Sleep(time.Millisecond * 100)
 		}
 		select {
 		case <-c.opt.close:
 		default:
 			c.reading()
+			time.Sleep(time.Millisecond * 10)
 		}
 	}
 }
 
 func (c *conn) reading() error {
-	msg, err := c.opt.reader.Read()
+	msg, err := c.opt.reader.ReadMessage()
 	if err != nil {
 		return err
+	}
+	if msg == nil {
+		return nil
 	}
 	go c.opt.dispatcher.Dispatch(msg, c)
 	return nil
@@ -96,4 +100,26 @@ func (c *conn) Writer() write.Writer {
 
 func (c *conn) Reader() read.Reader {
 	return c.opt.reader
+}
+
+func (c *conn) Close() error {
+	c.closed = true
+	close(c.opt.close)
+	return c.Conn.Close()
+}
+
+func (c *conn) Closed() bool {
+	return c.closed
+}
+
+func (c *conn) Extra() interface{} {
+	return c.opt.extra
+}
+
+func (c *conn) Dispatcher() conner.Dispatcher {
+	return c.opt.dispatcher
+}
+
+func (c *conn) WithStop(stop bool) {
+	c.opt.stop = stop
 }
