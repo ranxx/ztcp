@@ -12,7 +12,10 @@ import (
 type Reader interface {
 	buffer.Buffer
 
-	With(io.Reader) Reader
+	// io.Reader
+	Read(p []byte) (n int, err error)
+
+	With(io.Reader)
 
 	// Read 如果 stop为true
 	//
@@ -38,10 +41,9 @@ type Reader interface {
 
 type reader struct {
 	buffer.Buffer
-	io.Reader
+	// io.Reader
 
-	body []byte
-	opt  *Options
+	opt *Options
 }
 
 // DefaultReader ...
@@ -53,12 +55,9 @@ func DefaultReader(r io.Reader, opts ...Option) Reader {
 	}
 
 	read := &reader{
-		Reader: r,
-		body:   make([]byte, 0, 1024),
+		Buffer: buffer.NewBuffer(r),
 		opt:    opt,
 	}
-
-	read.Buffer = buffer.NewBuffer(read)
 
 	return read
 }
@@ -67,12 +66,11 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	if r.opt.stop {
 		return 0, nil
 	}
-	return r.Reader.Read(p)
+	return r.Buffer.Read(p)
 }
 
-func (r *reader) With(ir io.Reader) Reader {
-	r.Reader = ir
-	return r
+func (r *reader) With(ir io.Reader) {
+	r.Buffer.With(ir)
 }
 
 func (r *reader) ReadMessage() (message.Messager, error) {
@@ -82,7 +80,7 @@ func (r *reader) ReadMessage() (message.Messager, error) {
 
 	// 读 head
 	headData := make([]byte, r.opt.packer.GetHeadLength())
-	if _, err := io.ReadFull(r.Buffer, headData); err != nil {
+	if _, err := io.ReadFull(r, headData); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +92,7 @@ func (r *reader) ReadMessage() (message.Messager, error) {
 
 	// 读取 body
 	data := make([]byte, msg.GetDataLength())
-	if _, err := io.ReadFull(r.Buffer, data); err != nil {
+	if _, err := io.ReadFull(r, data); err != nil {
 		return nil, err
 	}
 
@@ -111,7 +109,7 @@ func (r *reader) ReadHeader() (message.Messager, []byte, error) {
 
 	// 读 head
 	headData := make([]byte, r.opt.packer.GetHeadLength())
-	if _, err := io.ReadFull(r.Buffer, headData); err != nil {
+	if _, err := io.ReadFull(r, headData); err != nil {
 		return nil, nil, err
 	}
 
@@ -130,7 +128,7 @@ func (r *reader) ReadBody(m message.Messager) (message.Messager, error) {
 	}
 
 	data := make([]byte, m.GetDataLength())
-	if _, err := io.ReadFull(r.Buffer, data); err != nil {
+	if _, err := io.ReadFull(r, data); err != nil {
 		return nil, err
 	}
 	m.SetData(data)

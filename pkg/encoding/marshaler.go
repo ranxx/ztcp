@@ -15,9 +15,14 @@ type Marshaler interface {
 	Marshal(id message.MsgID, v interface{}) ([]byte, error)
 }
 
-// ProvideMarshaler 提供的 marshaler
-type ProvideMarshaler interface {
+// ProvideBytes 提供的 Bytes() ([]byte, error)
+type ProvideBytes interface {
 	Bytes() ([]byte, error)
+}
+
+// ProvideMarshal 提供 Marshal([]byte, error)
+type ProvideMarshal interface {
+	Marshal() ([]byte, error)
 }
 
 // Marshal marshal
@@ -34,7 +39,11 @@ func (w Marshal) Marshal(id message.MsgID, v interface{}) ([]byte, error) {
 //
 // 不支持的将会 返回 unknown type
 func DefaultMarshal(id message.MsgID, v interface{}) ([]byte, error) {
-	if bytes, ok := v.(ProvideMarshaler); ok {
+	if pv, ok := v.(ProvideMarshal); ok {
+		return pv.Marshal()
+	}
+
+	if bytes, ok := v.(ProvideBytes); ok {
 		return bytes.Bytes()
 	}
 
@@ -93,15 +102,9 @@ func NewMarshaler(marshal Marshaler, specialMarshalers ...map[message.MsgID]Mars
 }
 
 func (m *marshaler) Marshal(t message.MsgID, v interface{}) ([]byte, error) {
-	if bytes, ok := v.(ProvideMarshaler); ok {
-		return bytes.Bytes()
-	}
-
-	// 判断
 	marshal := m.specialMarshaler[t]
 	if marshal == nil {
 		marshal = m.marshal
 	}
-
 	return marshal.Marshal(t, v)
 }

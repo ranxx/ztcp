@@ -33,6 +33,8 @@ type Conner interface {
 
 	// 暂停 reading
 	WithStop(bool)
+
+	NetConn() net.Conn
 }
 
 // Dispatcher ...

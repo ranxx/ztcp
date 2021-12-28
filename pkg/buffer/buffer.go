@@ -6,7 +6,7 @@ import (
 
 // Buffer buffer
 type Buffer interface {
-	WithReader(r io.Reader) Buffer
+	With(r io.Reader)
 
 	Reset()
 
@@ -29,9 +29,8 @@ func NewBuffer(r io.Reader) Buffer {
 	}
 }
 
-func (b *buffer) WithReader(r io.Reader) Buffer {
+func (b *buffer) With(r io.Reader) {
 	b.Reader = r
-	return b
 }
 
 func (b *buffer) Reset() {
@@ -45,6 +44,7 @@ func (b *buffer) Write(data []byte) (n int, err error) {
 
 	// 如果 buf 已经被读完，并且 data 与 buf 一样长
 	if b.offset >= length && len(data) == length {
+		b.offset = 0
 		return copy(b.buf, data), nil
 	}
 

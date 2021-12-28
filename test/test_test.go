@@ -222,7 +222,7 @@ func Test05(t *testing.T) {
 			}
 			fmt.Println(c.Write(data2))
 			fmt.Println(writer.WriteValue([]byte(fmt.Sprintf("我在测第4个 %d  WriteValue", i))))
-			fmt.Println(writer.Write(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
+			fmt.Println(writer.WriteBytes(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
 			fmt.Println(writer.WriteMessager(messagerr.DefaultMessager(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  WriteMessager", i)))))
 		}
 	}()
@@ -338,7 +338,7 @@ func TestStruct(t *testing.T) {
 			}
 			fmt.Println(c.Write(data2))
 			fmt.Println(writer.WriteValue([]byte(fmt.Sprintf("我在测第4个 %d  WriteValue", i))))
-			fmt.Println(writer.Write(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
+			fmt.Println(writer.WriteBytes(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
 			fmt.Println(writer.WriteMessager(messagerr.DefaultMessager(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  WriteMessager", i)))))
 			fmt.Println(writer.WriteValue(&msgType{UserName: "axing"}))
 			fmt.Println(writer.WriteValue(&ttt.Message{ID: 26}))
@@ -466,7 +466,7 @@ func TestAbort(t *testing.T) {
 			}
 			fmt.Println(c.Write(data2))
 			fmt.Println(writer.WriteValue([]byte(fmt.Sprintf("我在测第4个 %d  WriteValue", i))))
-			fmt.Println(writer.Write(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
+			fmt.Println(writer.WriteBytes(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  Write", i))))
 			fmt.Println(writer.WriteMessager(messagerr.DefaultMessager(messagerr.MsgID(4), []byte(fmt.Sprintf("我在测第4个 %d  WriteMessager", i)))))
 			fmt.Println(writer.WriteValue(&msgType{UserName: "axing"}))
 			fmt.Println(writer.WriteValue(&ttt.Message{ID: 26}))
@@ -518,10 +518,10 @@ func TestServer(t *testing.T) {
 		i := 0
 		for ; ; i++ {
 			time.Sleep(time.Second)
-			writer.Write(0, []byte(fmt.Sprintf("我再说 %d", i)))
-			writer.Write(1, []byte(fmt.Sprintf("我再说 %d", i)))
-			writer.Write(2, []byte(fmt.Sprintf("我再说 %d", i)))
-			writer.Write(3, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.WriteBytes(0, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.WriteBytes(1, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.WriteBytes(2, []byte(fmt.Sprintf("我再说 %d", i)))
+			writer.WriteBytes(3, []byte(fmt.Sprintf("我再说 %d", i)))
 		}
 	}()
 

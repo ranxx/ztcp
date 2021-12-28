@@ -103,6 +103,9 @@ func (c *conn) Reader() read.Reader {
 }
 
 func (c *conn) Close() error {
+	if c.closed {
+		return nil
+	}
 	c.closed = true
 	close(c.opt.close)
 	return c.Conn.Close()
@@ -122,4 +125,8 @@ func (c *conn) Dispatcher() conner.Dispatcher {
 
 func (c *conn) WithStop(stop bool) {
 	c.opt.stop = stop
+}
+
+func (c *conn) NetConn() net.Conn {
+	return c.Conn
 }

@@ -11,7 +11,10 @@ import (
 type Writer interface {
 	With(io.Writer) Writer
 
-	Write(message.MsgID, []byte) (int, error)
+	// io.Writer
+	Write(p []byte) (n int, err error)
+
+	WriteBytes(message.MsgID, []byte) (int, error)
 
 	WriteMessager(message.Messager) (int, error)
 
@@ -49,7 +52,11 @@ func (w *writer) With(iw io.Writer) Writer {
 	return w
 }
 
-func (w *writer) Write(id message.MsgID, data []byte) (int, error) {
+func (w *writer) Write(p []byte) (n int, err error) {
+	return w.Writer.Write(p)
+}
+
+func (w *writer) WriteBytes(id message.MsgID, data []byte) (int, error) {
 	msg := w.opt.genMessage(id, data)
 
 	return w.WriteMessager(msg)
@@ -65,7 +72,7 @@ func (w *writer) WriteMessager(msg message.Messager) (int, error) {
 		return 0, err
 	}
 
-	n, err := w.Writer.Write(data)
+	n, err := w.Write(data)
 	if err != nil {
 		return n, err
 	}
@@ -87,7 +94,7 @@ func (w *writer) WriteValue(v interface{}) (int, error) {
 		return 0, err
 	}
 
-	return w.Write(id, data)
+	return w.WriteBytes(id, data)
 }
 
 func (w *writer) WriteValueWithID(id message.MsgID, v interface{}) (int, error) {
@@ -99,7 +106,7 @@ func (w *writer) WriteValueWithID(id message.MsgID, v interface{}) (int, error) 
 		return 0, err
 	}
 
-	return w.Write(id, data)
+	return w.WriteBytes(id, data)
 }
 
 func (w *writer) WithStop(stop bool) {

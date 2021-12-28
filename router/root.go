@@ -93,6 +93,9 @@ func (r *Root) Dispatch(conn conner.Conner, msg message.Messager) {
 func (r *Root) dispatch(conn conner.Conner, msg message.Messager) {
 	router := r.routers[msg.GetMsgID()]
 	if router == nil {
+		if r.unknown == nil {
+			return
+		}
 		ctx := context.Background()
 		req := request.NewRequest(msg, conn)
 		r.unknown.Serve(ctx, req)
