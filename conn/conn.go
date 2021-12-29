@@ -17,21 +17,23 @@ import (
 
 // conn ...
 type conn struct {
-	net.Conn            // net
-	id       int64      // 唯一标识
-	rlock    sync.Mutex // 读锁
-	wlock    sync.Mutex // 写锁
-	opt      *Options   // 可选项
-	closed   bool       // 关闭
+	net.Conn             // net
+	id        int64      // 唯一标识
+	rlock     sync.Mutex // 读锁
+	wlock     sync.Mutex // 写锁
+	opt       *Options   // 可选项
+	closed    bool       // 关闭
+	closeOnce *sync.Once
 }
 
 // NewConn ...
 func NewConn(id int64, _conn net.Conn, opts ...Option) conner.Conner {
 	conn := &conn{
-		id:    id,
-		Conn:  _conn,
-		rlock: sync.Mutex{},
-		wlock: sync.Mutex{},
+		id:        id,
+		Conn:      _conn,
+		rlock:     sync.Mutex{},
+		wlock:     sync.Mutex{},
+		closeOnce: &sync.Once{},
 	}
 
 	opt := DefaultOptions()
@@ -65,6 +67,7 @@ func (c *conn) Write(b []byte) (n int, err error) {
 
 func (c *conn) gReading() {
 	// 是否开启
+	defer c.Close()
 	for {
 		if c.opt.stop {
 			time.Sleep(time.Millisecond * 200)
@@ -74,7 +77,9 @@ func (c *conn) gReading() {
 		case <-c.opt.close:
 			return
 		default:
-			c.reading()
+			if err := c.reading(); err != nil && err.Error() == "EOF" {
+				return
+			}
 			time.Sleep(time.Millisecond * 10)
 		}
 	}
@@ -104,9 +109,18 @@ func (c *conn) Close() error {
 	if c.closed {
 		return nil
 	}
-	c.closed = true
-	close(c.opt.close)
-	return c.Conn.Close()
+	err := make(chan error)
+	go c.closeOnce.Do(func() {
+		defer func() {
+			err <- c.Conn.Close()
+		}()
+		c.closed = true
+		close(c.opt.close)
+		if c.opt.closeHandle != nil {
+			c.opt.closeHandle(c)
+		}
+	})
+	return <-err
 }
 
 func (c *conn) Closed() bool {

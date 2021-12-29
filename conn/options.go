@@ -1,6 +1,7 @@
 package conn
 
 import (
+	"github.com/ranxx/ztcp/conner"
 	"github.com/ranxx/ztcp/dispatch"
 	"github.com/ranxx/ztcp/pkg/io/read"
 	"github.com/ranxx/ztcp/pkg/io/write"
@@ -10,13 +11,14 @@ import (
 
 // Options ...
 type Options struct {
-	name       string
-	close      chan struct{}
-	dispatcher dispatch.Dispatcher // 消息分发
-	reader     read.Reader
-	writer     write.Writer
-	extra      interface{} // 扩展字段
-	stop       bool
+	name        string
+	close       chan struct{}
+	dispatcher  dispatch.Dispatcher // 消息分发
+	reader      read.Reader
+	writer      write.Writer
+	extra       interface{} // 扩展字段
+	stop        bool
+	closeHandle func(conner.Conner)
 }
 
 // DefaultOptions 默认
@@ -88,5 +90,12 @@ func WithExtra(extra interface{}) Option {
 func WithStop(stop bool) Option {
 	return func(o *Options) {
 		o.stop = stop
+	}
+}
+
+// WithCloseHandle ...
+func WithCloseHandle(closeHandle func(conner.Conner)) Option {
+	return func(o *Options) {
+		o.closeHandle = closeHandle
 	}
 }
