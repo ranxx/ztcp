@@ -13,6 +13,8 @@ type Buffer interface {
 	Read(p []byte) (n int, err error)
 
 	Write(data []byte) (n int, err error)
+
+	Bytes() []byte
 }
 
 type buffer struct {
@@ -63,7 +65,7 @@ func (b *buffer) Read(p []byte) (n int, err error) {
 	length := len(b.buf)
 
 	// buf 为空
-	if b.offset > length {
+	if b.offset >= length {
 		return b.Reader.Read(p)
 	}
 
@@ -90,4 +92,8 @@ func (b *buffer) Read(p []byte) (n int, err error) {
 	}
 	b.offset = length
 	return n1 + n2, nil
+}
+
+func (b *buffer) Bytes() []byte {
+	return b.buf[b.offset:]
 }

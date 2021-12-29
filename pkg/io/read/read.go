@@ -63,7 +63,7 @@ func DefaultReader(r io.Reader, opts ...Option) Reader {
 }
 
 func (r *reader) Read(p []byte) (n int, err error) {
-	if r.opt.stop {
+	if r.opt.stop || len(p) <= 0 {
 		return 0, nil
 	}
 	return r.Buffer.Read(p)

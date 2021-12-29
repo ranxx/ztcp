@@ -56,14 +56,10 @@ func (c *conn) Start() {
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
-	c.rlock.Lock()
-	defer c.rlock.Unlock()
 	return c.Conn.Read(b)
 }
 
 func (c *conn) Write(b []byte) (n int, err error) {
-	c.wlock.Lock()
-	defer c.wlock.Unlock()
 	return c.Conn.Write(b)
 }
 
@@ -71,10 +67,12 @@ func (c *conn) gReading() {
 	// 是否开启
 	for {
 		if c.opt.stop {
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 200)
+			continue
 		}
 		select {
 		case <-c.opt.close:
+			return
 		default:
 			c.reading()
 			time.Sleep(time.Millisecond * 10)
