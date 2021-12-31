@@ -50,3 +50,14 @@ func (m *Manager) Del(id int64) {
 	defer m.rwlock.Unlock()
 	delete(m.conns, id)
 }
+
+// Range 遍历
+func (m *Manager) Range(fc func(c Conner) error) {
+	m.rwlock.RLock()
+	defer m.rwlock.RUnlock()
+	for _, v := range m.conns {
+		if err := fc(v); err != nil {
+			return
+		}
+	}
+}
