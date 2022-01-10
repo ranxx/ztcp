@@ -74,7 +74,7 @@ func (s *Server) doListener() {
 		cn, err := s.listener.Accept()
 		if err != nil {
 			// 是否退出
-			panic(err)
+			return
 		}
 		conner, err := s.opt.genConner(s.opt.indexMgr.NewIndex(), cn)
 		if err != nil {
@@ -94,5 +94,9 @@ func (s *Server) GetManager() *conner.Manager {
 // Close 关闭
 func (s *Server) Close() {
 	close(s.opt.close)
+	if s.listener != nil {
+		s.listener.Close()
+		s.listener = nil
+	}
 	s.opt.manager.Close()
 }
