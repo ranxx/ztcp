@@ -23,8 +23,8 @@ func NewServer(network, address string, opts ...Option) *Server {
 		v(opt)
 	}
 
-	if opt.genConner == nil {
-		opt.genConner = func(i int64, c net.Conn) (conner.Conner, error) {
+	if opt.asyncGenConner == nil {
+		opt.asyncGenConner = func(i int64, c net.Conn) (conner.Conner, error) {
 			return conn.NewConn(i, c, opt.genOptions...), nil
 		}
 	}
@@ -76,13 +76,15 @@ func (s *Server) doListener() {
 			// 是否退出
 			return
 		}
-		conner, err := s.opt.genConner(s.opt.indexMgr.NewIndex(), cn)
-		if err != nil {
-			continue
-		}
-		s.opt.manager.AddConn(conner)
-		// 开启
-		conner.Start()
+
+		go func() {
+			conner, err := s.opt.asyncGenConner(s.opt.indexMgr.NewIndex(), cn)
+			if err != nil {
+				return
+			}
+			s.opt.manager.AddConn(conner)
+			conner.Start()
+		}()
 	}
 }
 

@@ -11,27 +11,27 @@ import (
 
 // Options ...
 type Options struct {
-	name        string
-	indexMgr    *index.Index64
-	manager     *conner.Manager
-	listener    net.Listener
-	listenAfter func(net.Listener) // 监听之后
-	close       chan struct{}
-	genConner   func(int64, net.Conn) (conner.Conner, error)
-	genOptions  []conn.Option
+	name           string
+	indexMgr       *index.Index64
+	manager        *conner.Manager
+	listener       net.Listener
+	listenAfter    func(net.Listener) // 监听之后
+	close          chan struct{}
+	asyncGenConner func(int64, net.Conn) (conner.Conner, error)
+	genOptions     []conn.Option
 }
 
 // DefaultOptions 默认
 func DefaultOptions() *Options {
 	opt := &Options{
-		name:        "ztcp",
-		indexMgr:    index.NewIndexI64(),
-		manager:     conner.NewManager(),
-		listenAfter: nil,
-		listener:    nil,
-		close:       make(chan struct{}),
-		genOptions:  make([]conn.Option, 0, 10),
-		genConner:   nil,
+		name:           "ztcp",
+		indexMgr:       index.NewIndexI64(),
+		manager:        conner.NewManager(),
+		listenAfter:    nil,
+		listener:       nil,
+		close:          make(chan struct{}),
+		genOptions:     make([]conn.Option, 0, 10),
+		asyncGenConner: nil,
 	}
 
 	opt.listenAfter = func(l net.Listener) {
@@ -93,11 +93,11 @@ func WithClose(close chan struct{}) Option {
 	}
 }
 
-// WithGenConner gen conner
+// WithAsyncGenConner gen conner
 // 如果此选项被构造，会忽略 WithConnOptions 选项
-func WithGenConner(gen func(int64, net.Conn) (conner.Conner, error)) Option {
+func WithAsyncGenConner(gen func(int64, net.Conn) (conner.Conner, error)) Option {
 	return func(o *Options) {
-		o.genConner = gen
+		o.asyncGenConner = gen
 	}
 }
 
